@@ -1,0 +1,9 @@
+{
+  "migrations": [
+    "2026_08_10_054223_create_fuel_types_table",
+    "2026_08_10_054225_create_base_vehicles_table",
+    "2026_08_10_054227_create_vehicles_table",
+    "2026_08_10_054229_create_vehicle_tunings_table",
+    "2026_08_10_054231_create_vehicle_handling_table"
+  ]
+}

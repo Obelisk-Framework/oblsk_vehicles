@@ -1,30 +1,45 @@
---- VehicleService (client) - receives the server's "apply state" broadcast
---- for a freshly-spawned vehicle and applies engine/lock/health/handling/
---- tuning state to the local entity, once it's actually streamed in for
---- this client.
+--- VehicleService (client) - receives the server's fully-resolved "apply
+--- state" broadcast for a freshly-spawned vehicle and applies it to the
+--- local entity once it has actually streamed in for this client. Contains
+--- no ORM references (Vehicle/BaseVehicle/QueryBuilder do not exist in the
+--- client Lua VM); all data needed is already resolved server-side.
 VehicleService = {}
 
-Obelisk.onClient('vehicles:server:apply-state', function(netId, vehicleId, baseVehicleId)
-    if not NetworkDoesNetworkIdExist(netId) then return end
-
-    local entity = NetworkGetEntityFromNetworkId(netId)
-    if entity == 0 then return end
-
-    local vehicle = Vehicle:findSync(vehicleId)
-    local baseVehicle = BaseVehicle:findSync(baseVehicleId)
-    if not vehicle or not baseVehicle then return end
-
-    SetVehicleEngineOn(entity, vehicle.attributes.engine_on == true, true, false)
-    SetVehicleDoorsLocked(entity, vehicle.attributes.alldoors_locked and 2 or 1)
-    SetVehicleEngineHealth(entity, vehicle.attributes.engine_health)
-    SetVehicleBodyHealth(entity, vehicle.attributes.body_health)
-
-    VehicleHandling.applyHandling(entity, baseVehicleId, vehicleId)
-
-    for _, row in ipairs(QueryBuilder.new('vehicle_tunings'):where('vehicle_id', vehicleId):getSync()) do
-        local ok, value = pcall(json.decode, row.value)
-        VehicleTuningService.apply(entity, row.key, ok and value or nil)
+local function waitForEntity(netId, callback, attemptsLeft)
+    attemptsLeft = attemptsLeft or 20
+    if NetworkDoesNetworkIdExist(netId) then
+        local entity = NetworkGetEntityFromNetworkId(netId)
+        if entity ~= 0 then
+            callback(entity)
+            return
+        end
     end
+    if attemptsLeft <= 0 then
+        print('[VehicleService] WARNING: gave up waiting for netId ' .. tostring(netId) .. ' to stream in')
+        return
+    end
+    Citizen.SetTimeout(250, function()
+        waitForEntity(netId, callback, attemptsLeft - 1)
+    end)
+end
+
+Obelisk.onClient('vehicles:server:apply-state', function(netId, state, mergedHandling, tunings)
+    waitForEntity(netId, function(entity)
+        SetVehicleEngineOn(entity, state.engineOn, true, false)
+        SetVehicleDoorsLocked(entity, state.allDoorsLocked and 2 or 1)
+        SetVehicleEngineHealth(entity, state.engineHealth)
+        SetVehicleBodyHealth(entity, state.bodyHealth)
+
+        VehicleHandling.applyMerged(entity, mergedHandling)
+
+        for _, tuning in ipairs(tunings) do
+            if tuning.value ~= nil then
+                VehicleTuningService.apply(entity, tuning.key, tuning.value)
+            else
+                print('[VehicleService] WARNING: skipping tuning "' .. tostring(tuning.key) .. '" with unparseable/nil value')
+            end
+        end
+    end)
 end)
 
 return VehicleService

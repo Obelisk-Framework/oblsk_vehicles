@@ -1,41 +1,40 @@
---- VehicleHandling (shared) - handling merge/apply. Lives in shared/, not
---- server/services/, because both the server (Task 5's spawn path) and the
---- client (Task 5's apply-state handler) need to call this, and
---- client_scripts/server_scripts run in separate Lua VMs in FXServer, a
---- server-only global would be invisible to client code.
+--- VehicleHandling (shared) - pure handling-map merge logic and the
+--- int/float field-type lookup. No DB access, no natives: the server calls
+--- mergeRows() with rows it already queried itself; the client calls
+--- applyMerged() with the map the server sent over the network. Neither
+--- function touches anything that only exists in one Lua VM.
 VehicleHandling = {}
 
 --- Which handling.meta fields are natively integers vs floats. Not
---- exhaustive (GTA's handling.meta has ~90 fields); this is a
---- representative subset establishing the pattern. Extend as needed.
-local HANDLING_INT_FIELDS = {
+--- exhaustive (GTA's handling.meta has ~90 fields); representative subset.
+VehicleHandling.INT_FIELDS = {
     nInitialDriveGears = true,
     nMonetaryValue = true,
 }
 
---- Reads base_vehicle-level defaults and vehicle-level overrides, merges
---- them (instance wins), and applies the result to a live entity via
---- SetVehicleHandlingFloat/Int.
---- @param entity number
---- @param baseVehicleId number
---- @param vehicleId number
-function VehicleHandling.applyHandling(entity, baseVehicleId, vehicleId)
+--- Merges base_vehicle-level default rows with vehicle-level override rows
+--- (override wins). Pure data in, pure data out; no DB access.
+--- @param baseRows table[] rows with .field and .value
+--- @param overrideRows table[] rows with .field and .value
+--- @return table field -> value
+function VehicleHandling.mergeRows(baseRows, overrideRows)
     local merged = {}
-
-    local baseRows = QueryBuilder.new('vehicle_handling')
-        :where('owner_type', 'base_vehicle'):where('owner_id', baseVehicleId):getSync()
     for _, row in ipairs(baseRows) do
         merged[row.field] = row.value
     end
-
-    local overrideRows = QueryBuilder.new('vehicle_handling')
-        :where('owner_type', 'vehicle'):where('owner_id', vehicleId):getSync()
     for _, row in ipairs(overrideRows) do
         merged[row.field] = row.value
     end
+    return merged
+end
 
+--- Applies an already-merged field->value map to a live entity via
+--- SetVehicleHandlingFloat/Int.
+--- @param entity number
+--- @param merged table field -> value
+function VehicleHandling.applyMerged(entity, merged)
     for field, value in pairs(merged) do
-        if HANDLING_INT_FIELDS[field] then
+        if VehicleHandling.INT_FIELDS[field] then
             SetVehicleHandlingInt(entity, 'CHandlingData', field, math.floor(value))
         else
             SetVehicleHandlingFloat(entity, 'CHandlingData', field, value)

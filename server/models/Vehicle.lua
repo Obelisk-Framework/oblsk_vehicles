@@ -12,6 +12,7 @@ Vehicle.fillable = {
     'base_vehicle_id', 'key', 'owner_type', 'owner_id',
     'engine_on', 'backdoor_locked', 'alldoors_locked',
     'engine_health', 'body_health', 'body_damage',
+    'plate', 'display_name', 'fuel_level', 'stored', 'garage_id', 'favorite',
 }
 
 Vehicle.hidden = {}

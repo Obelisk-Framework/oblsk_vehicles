@@ -9,12 +9,12 @@
 return {
     up = function()
         Schema.table('vehicles', function(table)
-            table:string('plate', 12):unique()
+            table:string('plate', 12):unique():nullable()
             table:string('display_name', 100):nullable()
-            table:float('fuel_level'):default(100)
-            table:boolean('stored'):default(1)
+            table:float('fuel_level'):default(100):nullable()
+            table:boolean('stored'):default(1):nullable()
             table:integer('garage_id'):nullable()
-            table:boolean('favorite'):default(0)
+            table:boolean('favorite'):default(0):nullable()
         end)
 
         print('[Migration] Added instance and garage fields to vehicles table')

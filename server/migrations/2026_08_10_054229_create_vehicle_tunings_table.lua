@@ -3,9 +3,9 @@ return {
     up = function()
         Schema.create('vehicle_tunings', function(table)
             table:id()
-            table:integer('vehicle_id'):notNullable()
-            table:string('key', 100):notNullable()
-            table:json('value')
+            table:integer('vehicle_id')
+            table:string('key', 100)
+            table:json('value'):nullable()
             table:timestamps()
 
             table:unique({'vehicle_id', 'key'})

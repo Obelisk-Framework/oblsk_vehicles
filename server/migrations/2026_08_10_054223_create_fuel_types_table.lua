@@ -3,7 +3,7 @@ return {
     up = function()
         Schema.create('fuel_types', function(table)
             table:id()
-            table:string('name', 100):notNullable():unique()
+            table:string('name', 100):unique()
             table:timestamps()
         end)
 

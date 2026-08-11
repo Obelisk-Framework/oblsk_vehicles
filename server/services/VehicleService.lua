@@ -49,6 +49,8 @@ function VehicleService.spawn(vehicleId, coords)
         allDoorsLocked = isTruthyFlag(vehicle.attributes.alldoors_locked),
         engineHealth = vehicle.attributes.engine_health,
         bodyHealth = vehicle.attributes.body_health,
+        fuelLevel = vehicle.attributes.fuel_level,
+        plate = vehicle.attributes.plate,
     }
 
     CreateVehicleServerSetter(baseVehicle.attributes.model, 'automobile', coords.x, coords.y, coords.z, coords.heading or 0.0, function(entity)

@@ -29,6 +29,12 @@ Obelisk.onClient('vehicles:server:apply-state', function(netId, state, mergedHan
         SetVehicleDoorsLocked(entity, state.allDoorsLocked and 2 or 1)
         SetVehicleEngineHealth(entity, state.engineHealth)
         SetVehicleBodyHealth(entity, state.bodyHealth)
+        if state.fuelLevel then
+            SetVehicleFuelLevel(entity, state.fuelLevel + 0.0)
+        end
+        if state.plate then
+            SetVehicleNumberPlateText(entity, state.plate)
+        end
 
         VehicleHandling.applyMerged(entity, mergedHandling)
 

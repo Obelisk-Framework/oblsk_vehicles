@@ -37,7 +37,87 @@ VehicleTuningService.register('turbo', {
 
 VehicleTuningService.register('spoiler', {
     apply = function(entity, value)
-        SetVehicleMod(entity, 3, value, false)
+        SetVehicleMod(entity, 0, value, false)
+    end
+})
+
+VehicleTuningService.register('secondaryColor', {
+    apply = function(entity, value)
+        SetVehicleCustomSecondaryColour(entity, value.r, value.g, value.b)
+    end
+})
+
+VehicleTuningService.register('pearlescent', {
+    apply = function(entity, value)
+        SetVehicleExtraColours(entity, value.pearlescentId, value.wheelId)
+    end
+})
+
+VehicleTuningService.register('bumperF', {
+    apply = function(entity, value) SetVehicleMod(entity, 1, value, false) end
+})
+
+VehicleTuningService.register('bumperR', {
+    apply = function(entity, value) SetVehicleMod(entity, 2, value, false) end
+})
+
+VehicleTuningService.register('skirt', {
+    apply = function(entity, value) SetVehicleMod(entity, 3, value, false) end
+})
+
+VehicleTuningService.register('exhaust', {
+    apply = function(entity, value) SetVehicleMod(entity, 4, value, false) end
+})
+
+VehicleTuningService.register('hood', {
+    apply = function(entity, value) SetVehicleMod(entity, 7, value, false) end
+})
+
+VehicleTuningService.register('roof', {
+    apply = function(entity, value) SetVehicleMod(entity, 10, value, false) end
+})
+
+VehicleTuningService.register('engine', {
+    apply = function(entity, value) SetVehicleMod(entity, 11, value, false) end
+})
+
+VehicleTuningService.register('brakes', {
+    apply = function(entity, value) SetVehicleMod(entity, 12, value, false) end
+})
+
+VehicleTuningService.register('suspension', {
+    apply = function(entity, value) SetVehicleMod(entity, 15, value, false) end
+})
+
+VehicleTuningService.register('horn', {
+    apply = function(entity, value) SetVehicleMod(entity, 14, value, false) end
+})
+
+VehicleTuningService.register('wheels', {
+    apply = function(entity, value)
+        SetVehicleWheelType(entity, value.wheelType)
+        SetVehicleMod(entity, 23, value.index, false)
+    end
+})
+
+VehicleTuningService.register('window', {
+    apply = function(entity, value)
+        SetVehicleWindowTint(entity, value)
+    end
+})
+
+VehicleTuningService.register('neon', {
+    apply = function(entity, value)
+        SetVehicleNeonLightsColour(entity, value.r, value.g, value.b)
+        for i = 0, 3 do
+            SetVehicleNeonLightEnabled(entity, i, true)
+        end
+    end
+})
+
+VehicleTuningService.register('livery', {
+    apply = function(entity, value)
+        SetVehicleLivery(entity, value)
     end
 })
 

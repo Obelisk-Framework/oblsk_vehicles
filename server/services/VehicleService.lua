@@ -61,4 +61,15 @@ function VehicleService.spawn(vehicleId, coords)
     end)
 end
 
+--- Reverse lookup of activeNetIds — small map (one entry per currently
+--- spawned Obelisk vehicle), a linear scan is fine.
+--- @param netId number
+--- @return number|nil vehicleId
+function VehicleService.findVehicleIdByNetId(netId)
+    for vehicleId, id in pairs(VehicleService.activeNetIds) do
+        if id == netId then return vehicleId end
+    end
+    return nil
+end
+
 return VehicleService

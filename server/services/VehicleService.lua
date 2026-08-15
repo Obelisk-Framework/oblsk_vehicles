@@ -72,4 +72,56 @@ function VehicleService.findVehicleIdByNetId(netId)
     return nil
 end
 
+--- @return table[] every vehicle row with its base model's model/name, plus net_id if currently spawned
+function VehicleService.listAll()
+    local vehicles = QueryBuilder.new('vehicles'):getSync()
+    local baseById = {}
+    for _, base in ipairs(QueryBuilder.new('base_vehicles'):getSync()) do
+        baseById[base.id] = base
+    end
+
+    for _, vehicle in ipairs(vehicles) do
+        local base = baseById[vehicle.base_vehicle_id]
+        vehicle.model = base and base.model or nil
+        vehicle.name = base and base.name or nil
+        vehicle.net_id = VehicleService.activeNetIds[vehicle.id]
+    end
+
+    return vehicles
+end
+
+--- Despawns the vehicle if currently spawned, then deletes its row.
+--- @param vehicleId number
+--- @return boolean
+function VehicleService.deleteById(vehicleId)
+    local netId = VehicleService.activeNetIds[vehicleId]
+    if netId then
+        local entity = NetworkGetEntityFromNetworkId(netId)
+        if entity and DoesEntityExist(entity) then
+            DeleteEntity(entity)
+        end
+        VehicleService.activeNetIds[vehicleId] = nil
+    end
+
+    QueryBuilder.new('vehicles'):where('id', vehicleId):delete()
+    return true
+end
+
+--- Moves a currently-spawned vehicle to the given coords. No-ops (with a
+--- reason) if the vehicle isn't spawned — spawning one just to move it is
+--- Garage-tab territory, not this slice.
+--- @param vehicleId number
+--- @param coords table { x, y, z }
+--- @return boolean, string|nil reason
+function VehicleService.teleportToCoords(vehicleId, coords)
+    local netId = VehicleService.activeNetIds[vehicleId]
+    if not netId then
+        return false, 'Vehicle is not currently spawned'
+    end
+
+    local entity = NetworkGetEntityFromNetworkId(netId)
+    SetEntityCoords(entity, coords.x, coords.y, coords.z)
+    return true
+end
+
 return VehicleService

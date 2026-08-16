@@ -124,4 +124,88 @@ function VehicleService.teleportToCoords(vehicleId, coords)
     return true
 end
 
+--------------------------------------------------------------------------------
+-- base_vehicles catalog admin CRUD (admin panel "Vehicles" tab, catalog view)
+--------------------------------------------------------------------------------
+
+--- @return table[] every base_vehicles row, with fuel_type_name resolved from
+---   fuel_types (nil when fuel_type_id is null, same as ItemService's
+---   base_items/item_bindings join pattern).
+function VehicleService.listBaseVehicles()
+    local baseVehicles = QueryBuilder.new('base_vehicles'):getSync()
+
+    local fuelTypesById = {}
+    for _, fuelType in ipairs(QueryBuilder.new('fuel_types'):getSync()) do
+        fuelTypesById[fuelType.id] = fuelType
+    end
+
+    for _, baseVehicle in ipairs(baseVehicles) do
+        local fuelType = baseVehicle.fuel_type_id and fuelTypesById[baseVehicle.fuel_type_id]
+        baseVehicle.fuel_type_name = fuelType and fuelType.name or nil
+    end
+
+    return baseVehicles
+end
+
+--- @param attributes table see BaseVehicle.fillable for accepted keys; `model` is required and must be unique
+--- @return number|nil id, string|nil reason
+function VehicleService.createBaseVehicle(attributes)
+    if not attributes.model or attributes.model == '' then
+        return nil, 'Model is required'
+    end
+
+    local ok, result = pcall(function() return BaseVehicle:createSync(attributes) end)
+    if not ok then
+        return nil, 'Model already in use'
+    end
+
+    return result.attributes.id, nil
+end
+
+--- Whitelist-updates an existing base vehicle. Unlike ItemService's
+--- updateBaseItem, `model` has no lookup-key concern here (nothing keys off
+--- of it the way ItemService.binding()/Config.Requires keys off base_items.name),
+--- so every fillable field is editable -- kept as an explicit whitelist
+--- constant anyway, for consistency with that established convention.
+--- @param baseVehicleId number
+--- @param attributes table any of BaseVehicle.fillable
+--- @return boolean
+local EDITABLE_BASE_VEHICLE_FIELDS = {
+    'model', 'name',
+    'has_trunk', 'trunk_size', 'trunk_slots',
+    'has_glove_compartment', 'glove_compartment_size', 'glove_compartment_slots',
+    'fuel_type_id', 'tank_size', 'fuel_consumption_rate',
+    'seats',
+}
+function VehicleService.updateBaseVehicle(baseVehicleId, attributes)
+    local update = {}
+    for _, field in ipairs(EDITABLE_BASE_VEHICLE_FIELDS) do
+        if attributes[field] ~= nil then
+            update[field] = attributes[field]
+        end
+    end
+    QueryBuilder.new('base_vehicles'):where('id', baseVehicleId):update(update)
+
+    return true
+end
+
+--- Refuses to delete a base_vehicle still referenced by an owned `vehicles`
+--- row, mirroring ItemService's "refuse if still in use" pattern.
+--- @param baseVehicleId number
+--- @return boolean, string|nil reason
+function VehicleService.deleteBaseVehicle(baseVehicleId)
+    local inUse = QueryBuilder.new('vehicles'):where('base_vehicle_id', baseVehicleId):firstSync()
+    if inUse then
+        return false, 'Vehicle model is still in use by owned vehicles'
+    end
+
+    QueryBuilder.new('base_vehicles'):where('id', baseVehicleId):delete()
+    return true
+end
+
+--- @return table[] every fuel_types row, for the admin UI's fuel-type dropdown.
+function VehicleService.listFuelTypesForAdmin()
+    return QueryBuilder.new('fuel_types'):getSync()
+end
+
 return VehicleService

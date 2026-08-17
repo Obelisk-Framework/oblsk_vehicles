@@ -5,6 +5,35 @@
 --- client Lua VM); all data needed is already resolved server-side.
 VehicleService = {}
 
+--- netId -> true while a "fuel contaminated" stall loop is active for that
+--- vehicle. Keyed by netId (not entity) since the loop is started/stopped
+--- from server broadcasts that only carry netId, and an entity handle can
+--- go stale across streaming; the loop itself re-resolves the entity each
+--- poll and simply stops once the flag is cleared.
+local stallLoops = {}
+
+--- Simple polling stall: while `stallLoops[netId]` stays true, force the
+--- engine back off shortly after any start attempt. No state machine -
+--- just "can't stay running", checked every 250-500ms.
+local function startStallLoop(netId)
+    if stallLoops[netId] then return end -- already running, don't stack threads
+    stallLoops[netId] = true
+
+    Citizen.CreateThread(function()
+        while stallLoops[netId] do
+            Citizen.Wait(300)
+            local entity = NetworkGetEntityFromNetworkId(netId)
+            if entity ~= 0 and DoesEntityExist(entity) and GetIsVehicleEngineRunning(entity) then
+                SetVehicleEngineOn(entity, false, true, true)
+            end
+        end
+    end)
+end
+
+local function stopStallLoop(netId)
+    stallLoops[netId] = nil
+end
+
 local function waitForEntity(netId, callback, attemptsLeft)
     attemptsLeft = attemptsLeft or 20
     if NetworkDoesNetworkIdExist(netId) then
@@ -23,7 +52,7 @@ local function waitForEntity(netId, callback, attemptsLeft)
     end)
 end
 
-Obelisk.onClient('vehicles:server:apply-state', function(netId, state, mergedHandling, tunings)
+Obelisk.onServer('vehicles:server:apply-state', function(netId, state, mergedHandling, tunings)
     waitForEntity(netId, function(entity)
         SetVehicleEngineOn(entity, state.engineOn, true, false)
         SetVehicleDoorsLocked(entity, state.allDoorsLocked and 2 or 1)
@@ -45,7 +74,23 @@ Obelisk.onClient('vehicles:server:apply-state', function(netId, state, mergedHan
                 print('[VehicleService] WARNING: skipping tuning "' .. tostring(tuning.key) .. '" with unparseable/nil value')
             end
         end
+
+        if state.fuelContaminated then
+            startStallLoop(netId)
+        else
+            stopStallLoop(netId)
+        end
     end)
+end)
+
+--- Live push from VehicleService.setFuelContaminated (server) - starts or
+--- stops the stall loop immediately without waiting for a fresh apply-state.
+Obelisk.onServer('vehicles:server:setContaminated', function(netId, contaminated)
+    if contaminated then
+        startStallLoop(netId)
+    else
+        stopStallLoop(netId)
+    end
 end)
 
 return VehicleService

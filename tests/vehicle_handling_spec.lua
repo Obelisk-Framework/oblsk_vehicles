@@ -1,11 +1,11 @@
---- Unit tests for VehicleHandling.mergeRows (base defaults + overrides) and
---- VehicleHandling.applyMerged (int/float native dispatch on an
+--- Unit tests for VehicleHandlingService.mergeRows (base defaults + overrides) and
+--- VehicleHandlingService.applyMerged (int/float native dispatch on an
 --- already-merged map). Run from the repository root:
 --- lua5.4 tests/vehicle_handling_spec.lua
 
 local scriptDir = arg[0]:match('(.*/)') or './'
 
-dofile(scriptDir .. '../shared/services/VehicleHandling.lua')
+dofile(scriptDir .. '../shared/services/VehicleHandlingService.lua')
 
 local tests, failures, passed = {}, {}, 0
 local function test(name, fn) tests[#tests + 1] = {name = name, fn = fn} end
@@ -18,7 +18,7 @@ local function eq(actual, expected, msg)
 end
 
 test('mergeRows: a base row applies when there is no override', function()
-    local merged = VehicleHandling.mergeRows(
+    local merged = VehicleHandlingService.mergeRows(
         { { field = 'fMass', value = 1500.0 } },
         {}
     )
@@ -26,7 +26,7 @@ test('mergeRows: a base row applies when there is no override', function()
 end)
 
 test('mergeRows: an override row wins over the base default', function()
-    local merged = VehicleHandling.mergeRows(
+    local merged = VehicleHandlingService.mergeRows(
         { { field = 'fMass', value = 1500.0 } },
         { { field = 'fMass', value = 2000.0 } }
     )
@@ -34,7 +34,7 @@ test('mergeRows: an override row wins over the base default', function()
 end)
 
 test('mergeRows: an empty base and empty override merge to an empty table', function()
-    local merged = VehicleHandling.mergeRows({}, {})
+    local merged = VehicleHandlingService.mergeRows({}, {})
     eq(next(merged), nil)
 end)
 
@@ -43,7 +43,7 @@ test('applyMerged: a float-typed field calls SetVehicleHandlingFloat', function(
     _G.SetVehicleHandlingFloat = function(entity, class, field, value) captured = {entity, class, field, value} end
     _G.SetVehicleHandlingInt = function() error('should not be called for a float field') end
 
-    VehicleHandling.applyMerged(1, { fMass = 1500.0 })
+    VehicleHandlingService.applyMerged(1, { fMass = 1500.0 })
 
     eq(captured[1], 1)
     eq(captured[3], 'fMass')
@@ -55,7 +55,7 @@ test('applyMerged: an int-typed field calls SetVehicleHandlingInt, not Float', f
     _G.SetVehicleHandlingFloat = function() floatCalled = true end
     _G.SetVehicleHandlingInt = function() intCalled = true end
 
-    VehicleHandling.applyMerged(1, { nInitialDriveGears = 6 })
+    VehicleHandlingService.applyMerged(1, { nInitialDriveGears = 6 })
 
     eq(floatCalled, false)
     eq(intCalled, true)
@@ -66,12 +66,12 @@ test('applyMerged: an empty map calls no natives', function()
     _G.SetVehicleHandlingFloat = function() called = true end
     _G.SetVehicleHandlingInt = function() called = true end
 
-    VehicleHandling.applyMerged(1, {})
+    VehicleHandlingService.applyMerged(1, {})
 
     eq(called, false)
 end)
 
-print('Running VehicleHandling unit tests\n')
+print('Running VehicleHandlingService unit tests\n')
 for _, t in ipairs(tests) do
     local ok, err = pcall(t.fn)
     if ok then

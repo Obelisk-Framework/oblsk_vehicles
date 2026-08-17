@@ -1,13 +1,13 @@
---- VehicleHandling (shared) - pure handling-map merge logic and the
+--- VehicleHandlingService (shared) - pure handling-map merge logic and the
 --- int/float field-type lookup. No DB access, no natives: the server calls
 --- mergeRows() with rows it already queried itself; the client calls
 --- applyMerged() with the map the server sent over the network. Neither
 --- function touches anything that only exists in one Lua VM.
-VehicleHandling = {}
+VehicleHandlingService = {}
 
 --- Which handling.meta fields are natively integers vs floats. Not
 --- exhaustive (GTA's handling.meta has ~90 fields); representative subset.
-VehicleHandling.INT_FIELDS = {
+VehicleHandlingService.INT_FIELDS = {
     nInitialDriveGears = true,
     nMonetaryValue = true,
 }
@@ -17,7 +17,7 @@ VehicleHandling.INT_FIELDS = {
 --- @param baseRows table[] rows with .field and .value
 --- @param overrideRows table[] rows with .field and .value
 --- @return table field -> value
-function VehicleHandling.mergeRows(baseRows, overrideRows)
+function VehicleHandlingService.mergeRows(baseRows, overrideRows)
     local merged = {}
     for _, row in ipairs(baseRows) do
         merged[row.field] = row.value
@@ -32,9 +32,9 @@ end
 --- SetVehicleHandlingFloat/Int.
 --- @param entity number
 --- @param merged table field -> value
-function VehicleHandling.applyMerged(entity, merged)
+function VehicleHandlingService.applyMerged(entity, merged)
     for field, value in pairs(merged) do
-        if VehicleHandling.INT_FIELDS[field] then
+        if VehicleHandlingService.INT_FIELDS[field] then
             SetVehicleHandlingInt(entity, 'CHandlingData', field, math.floor(value))
         else
             SetVehicleHandlingFloat(entity, 'CHandlingData', field, value)
@@ -42,4 +42,4 @@ function VehicleHandling.applyMerged(entity, merged)
     end
 end
 
-return VehicleHandling
+return VehicleHandlingService

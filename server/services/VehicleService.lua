@@ -30,11 +30,11 @@ function VehicleService.spawn(vehicleId, coords)
         return
     end
 
-    local baseRows = QueryBuilder.new('vehicle_handling')
+    local baseRows = VehicleHandling
         :where('owner_type', 'base_vehicle'):where('owner_id', baseVehicle.attributes.id):get()
-    local overrideRows = QueryBuilder.new('vehicle_handling')
+    local overrideRows = VehicleHandling
         :where('owner_type', 'vehicle'):where('owner_id', vehicleId):get()
-    local mergedHandling = VehicleHandling.mergeRows(baseRows, overrideRows)
+    local mergedHandling = VehicleHandlingService.mergeRows(baseRows, overrideRows)
 
     local tunings = {}
     for _, row in ipairs(QueryBuilder.new('vehicle_tunings'):where('vehicle_id', vehicleId):get()) do

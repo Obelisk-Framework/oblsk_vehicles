@@ -65,7 +65,7 @@ Obelisk.onServer('vehicles:server:apply-state', function(netId, state, mergedHan
             SetVehicleNumberPlateText(entity, state.plate)
         end
 
-        VehicleHandling.applyMerged(entity, mergedHandling)
+        VehicleHandlingService.applyMerged(entity, mergedHandling)
 
         for _, tuning in ipairs(tunings) do
             if tuning.value ~= nil then

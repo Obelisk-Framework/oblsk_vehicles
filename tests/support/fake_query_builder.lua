@@ -1,5 +1,5 @@
 --- Fake QueryBuilder for tests — stores data in a simple tables[table_name] = rows structure.
---- Supports: new(table), where(column, value), getSync(), delete()
+--- Supports: new(table), where(column, value), get(), delete()
 
 return function(tables)
     local function makeMatcher(column, value)
@@ -17,7 +17,7 @@ return function(tables)
                 return self
             end,
 
-            getSync = function(self)
+            get = function(self)
                 local rows = tables[tableName] or {}
                 local result = {}
                 for _, row in ipairs(rows) do

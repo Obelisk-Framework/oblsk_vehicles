@@ -13,6 +13,7 @@ Vehicle.fillable = {
     'engine_on', 'backdoor_locked', 'alldoors_locked',
     'engine_health', 'body_health', 'body_damage',
     'plate', 'display_name', 'fuel_level', 'stored', 'garage_id', 'favorite',
+    'fuel_contaminated',
 }
 
 Vehicle.hidden = {}
@@ -23,6 +24,10 @@ Vehicle.casts = {
 
 function Vehicle:baseVehicleRelation()
     return self:belongsTo(BaseVehicle, 'base_vehicle_id', 'id')
+end
+
+function Vehicle:vehicleHandlings()
+    return self:morphMany(VehicleHandling)
 end
 
 return Vehicle

@@ -30,10 +30,8 @@ function VehicleService.spawn(vehicleId, coords)
         return
     end
 
-    local baseRows = VehicleHandling
-        :where('owner_type', 'base_vehicle'):where('owner_id', baseVehicle.attributes.id):get()
-    local overrideRows = VehicleHandling
-        :where('owner_type', 'vehicle'):where('owner_id', vehicleId):get()
+    local baseRows = baseVehicle:load('vehicleHandlings')
+    local overrideRows = vehicle:load('vehicleHandlings')
     local mergedHandling = VehicleHandlingService.mergeRows(baseRows, overrideRows)
 
     local tunings = {}

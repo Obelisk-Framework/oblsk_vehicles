@@ -21,4 +21,8 @@ function BaseVehicle:fuelType()
     return self:belongsTo(FuelType, 'fuel_type_id', 'id')
 end
 
+function BaseVehicle:vehicleHandlings()
+    return self:morphMany(VehicleHandling)
+end
+
 return BaseVehicle

@@ -5,6 +5,7 @@
     "2026_08_10_054227_create_vehicles_table",
     "2026_08_10_054229_create_vehicle_tunings_table",
     "2026_08_10_054231_create_vehicle_handling_table",
-    "2026_08_12_060100_add_instance_fields_to_vehicles_table"
+    "2026_08_12_060100_add_instance_fields_to_vehicles_table",
+    "2026_08_18_190000_add_display_fields_to_base_vehicles_table"
   ]
 }

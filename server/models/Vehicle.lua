@@ -26,6 +26,10 @@ function Vehicle:baseVehicleRelation()
     return self:belongsTo(BaseVehicle, 'base_vehicle_id', 'id')
 end
 
+function Vehicle.relations:tunings()
+    return self:hasMany(VehicleTuning, 'vehicle_id', 'id')
+end
+
 function Vehicle:vehicleHandlings()
     return self:morphMany(VehicleHandling)
 end

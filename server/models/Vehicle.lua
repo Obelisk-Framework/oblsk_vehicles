@@ -30,6 +30,10 @@ function Vehicle.relations:tunings()
     return self:hasMany(VehicleTuning, 'vehicle_id', 'id')
 end
 
+function Vehicle.relations:components()
+    return self:hasMany(VehicleComponentWear, 'vehicle_id', 'id')
+end
+
 function Vehicle:vehicleHandlings()
     return self:morphMany(VehicleHandling)
 end
